@@ -3,7 +3,6 @@ name: Serv00/CT8 Login Tasks
 on:
   workflow_dispatch:
   schedule:
-    # cron UTC时区，UTC13:15 = 北京时间21:15
     - cron: "15 13 1 * *"
 
 env:
@@ -22,7 +21,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 使用node生成accounts.json，同时校验JSON，避开bash here‑doc YAML语法bug
       - name: Create accounts.json & validate JSON
         run: |
           node -e "
@@ -36,8 +34,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          cache: 'npm'
+          node-version: '22.x'
+          # cache: 'npm'  无lock文件，注释/删除
 
       - name: Install system dependencies for puppeteer
         run: |
