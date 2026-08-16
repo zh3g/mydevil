@@ -61,6 +61,12 @@ async function sendTelegramMessage(token, chatId, message) {
             await page.type('input[name="username"]', username);
             await page.type('input[name="password"]', password);
 
+            // [DEBUG] 检查输入框实际值，排查是输入失败还是网站风控
+            const userVal = await page.$eval('input[name="username"]', el => el.value);
+            const passVal = await page.$eval('input[name="password"]', el => el.value);
+            console.log('[DEBUG] 用户名框实际内容:', userVal);
+            console.log('[DEBUG] 密码框实际长度:', passVal.length);
+
             const loginButton = await page.$('div.login-form__button button[type="submit"]');
             
             if (!loginButton) throw new Error('无法找到登录按钮');
