@@ -3,41 +3,72 @@ name: Serv00/CT8 Login Tasks
 on:
   workflow_dispatch:
   schedule:
-    - cron: "14 13 1 * *"  # 每月1号，运行时间为13:14
-  # push:
-  #   paths-ignore:
-  #     - "LICENSE"
-  #     - "README.md"
-  #     - "README_**"
-  #     - "README-**"
-  #   branches:
-  #     - main
+    # cron UTC时区，UTC13:15 = 北京时间21:15
+    - cron: "15 13 1 * *"
 
 env:
   ACCOUNTS_JSON: ${{ secrets.ACCOUNTS_JSON }}
   TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
   TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  PUPPETEER_ARGS: "--no-sandbox --disable-setuid-sandbox"
+  # 开启puppeteer详细调试日志
+  DEBUG: puppeteer:*
 
-jobs:  
-  login:  
-    runs-on: ubuntu-latest  
-  
-    steps:  
-      - name: Checkout repository  
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create accounts.json
-        run: echo "$ACCOUNTS_JSON" > accounts.json
-  
-      - name: Set up Node.js  
-        uses: actions/setup-node@v4  
-        with:  
-          node-version: '20.x'  
-  
-      - name: Install dependencies  
-        run: npm install puppeteer axios
-  
-      - name: Login into Serv00/CT8
+      - name: Create accounts.json (raw preserve content)
+        run: cat <<'EOF' > accounts.json
+$ACCOUNTS_JSON
+EOF
+
+      # 【调试步骤1】校验JSON格式是否合法，JSON错在这里直接报错，不用等到登录阶段
+      - name: Validate accounts.json JSON syntax
         run: |
-          set -e  
-          xvfb-run --server-args="-screen 0 1280x1024x24" node src/main.js
+          echo "===== JSON校验开始 ====="
+          cat accounts.json
+          echo ""
+          node -e "const fs=require('fs');JSON.parse(fs.readFileSync('./accounts.json','utf8'));console.log('✅ accounts.json JSON格式完全合法！')"
+          echo "===== JSON校验结束 ====="
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install system dependencies for puppeteer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libnss3 libgbm1 libasound2
+
+      - name: Install dependencies
+        run: npm install puppeteer axios
+
+      # 【调试步骤2】打印运行环境信息，方便排查网络/系统问题
+      - name: Print runtime debug info
+        run: |
+          echo "==== 环境调试信息 ===="
+          node -v
+          npm -v
+          curl -s ifconfig.me
+          echo ""
+          echo "GitHub Actions出口IP（上面输出）"
+          echo "======================"
+
+      - name: Login into Serv00/CT8 (DEBUG模式)
+        run: xvfb-run --server-args="-screen 0 1280x720x24" node src/main.js 2>&1 | tee run-log.txt
+
+      # 【调试步骤3】把完整运行日志上传为Artifact，可下载完整日志文件
+      - name: Upload full run log as artifact
+        uses: actions/upload-artifact@v4
+        if: always() # 无论成功失败，都保存日志
+        with:
+          name: full-execute-log
+          path: run-log.txt
