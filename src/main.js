@@ -80,6 +80,12 @@ async function sendTelegramMessage(token, chatId, message) {
                     await sendTelegramMessage(telegramToken, telegramChatId, `账号 ${username} 于北京时间 ${nowBeijing}（UTC时间 ${nowUtc}）登录成功！`);
                 }
             } else {
+                // [DEBUG] 截图+打印当前URL，排查登录失败原因
+                const currentUrl = page.url();
+                console.error(`[DEBUG] 登录失败 - 当前页面URL: ${currentUrl}`);
+                const screenshotPath = path.join(__dirname, `../screenshot_${username}.png`);
+                await page.screenshot({ path: screenshotPath, fullPage: false });
+                console.error(`[DEBUG] 截图已保存: ${screenshotPath}`);
                 if (telegramToken && telegramChatId) {
                     await sendTelegramMessage(telegramToken, telegramChatId, `账号 ${username} 登录失败，请检查账号和密码是否正确。`);
                 }
