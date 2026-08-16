@@ -21,7 +21,7 @@ async function sendTelegramMessage(token, chatId, message) {
     try {
         const response = await axios.post(url, data);
     } catch (error) {
-        console.error('Telegram 消息发生失败');
+        console.error('Telegram 消息发送失败:', error.message);  // [MODIFIED] 打印完整错误信息
     }
 }
 
