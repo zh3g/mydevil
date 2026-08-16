@@ -36,6 +36,12 @@ jobs:
   
       - name: Install dependencies  
         run: npm install puppeteer axios
+
+      - name: Install puppeteer Chrome browser
+        run: npx puppeteer browsers install chrome
+
+      - name: Check chrome install status
+        run: npx puppeteer browsers get chrome
   
       - name: Login into Serv00/CT8
         run: |
