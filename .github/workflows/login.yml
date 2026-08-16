@@ -3,7 +3,7 @@ name: Serv00/CT8 Login Tasks
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 13 1 * *"
+    - cron: "14 13 1 * *"
 
 env:
   ACCOUNTS_JSON: ${{ secrets.ACCOUNTS_JSON }}
@@ -35,12 +35,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-          # cache: 'npm'  无lock文件，注释/删除
 
       - name: Install system dependencies for puppeteer
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libnss3 libgbm1 libasound2
+          sudo apt-get install -y xvfb libnss3 libgbm1 libasound2t64
 
       - name: Install dependencies
         run: npm install puppeteer axios
@@ -50,13 +49,13 @@ jobs:
           echo "==== 环境调试信息 ===="
           node -v
           npm -v
-          curl -s ifconfig.me
+          curl -s ifconfig.me || echo "⚠️ curl获取出口IP失败"
           echo ""
           echo "GitHub Actions出口IP（上面输出）"
           echo "======================"
 
       - name: Login into Serv00/CT8 (DEBUG模式)
-        run: xvfb-run --server-args="-screen 0 1280x720x24" node src/main.js 2>&1 | tee run-log.txt
+        run: xvfb-run --server-args="-screen 0 1280x1024x24" node src/main.js 2>&1 | tee run-log.txt
 
       - name: Upload full run log as artifact
         uses: actions/upload-artifact@v4
